@@ -1,0 +1,16 @@
+services:
+  mongo_db:
+    image: mongo:latest
+    restart: unless-stopped
+    container_name: EcommerceApi_mongodb
+
+    volumes:
+      - mongo_db:/data/db
+      - mongo_config:/data/configdb
+
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo_db:
+  mongo_config:
