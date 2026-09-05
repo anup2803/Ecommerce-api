@@ -20,4 +20,50 @@ module.exports = {
       throw error;
     }
   },
+  updateUserOrder: async (userId, orderId, data) => {
+    try {
+      const result = await Order.findOneAndUpdate(
+        {
+          user: userId,
+          _id: orderId,
+        },
+        data,
+        { new: true, runValidators: true },
+      );
+
+      if (!result) {
+        throw {
+          message:
+            "Order could not be found or you are not authorized to update it.",
+          status: 404,
+        };
+      }
+
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  },
+  cancleOrderByUser: async (userId, orderId) => {
+    try {
+      const order = await Order.findOne({
+        user: userId,
+        _id: orderId,
+      });
+
+      if (!order) {
+        throw {
+          message: "Create a order first",
+          status: 404,
+        };
+      }
+
+      order.status = "cancelled";
+      const cancleOrder = await order.save();
+
+      return cancleOrder;
+    } catch (error) {
+      throw error;
+    }
+  },
 };

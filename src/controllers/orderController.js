@@ -2,6 +2,8 @@ const { getCartByUserId } = require("../services/cartServices");
 const {
   createOrderServices,
   getOrdersByUserIdServices,
+  updateUserOrder,
+  cancleOrderByUser,
 } = require("../services/orderServices");
 const { editProductServices } = require("../services/productServices");
 
@@ -20,7 +22,7 @@ module.exports = {
       }
 
       const userCart = await getCartByUserId(userId);
-      if (!userCart || userCart.length === 0) {
+      if (!userCart || !userCart.products || userCart.products.length === 0) {
         return next({
           status: 400,
           success: false,
@@ -93,6 +95,45 @@ module.exports = {
         success: true,
         count: orders ? orders.length : 0,
         data: orders,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+  updateUserOrderController: async (req, res, next) => {
+    try {
+      const data = req.body;
+      const userId = req.userId;
+      const { id } = req.params;
+
+      const updatedOrder = await updateUserOrder(userId, id, data);
+      return res.status(200).json({
+        success: true,
+        message: "Order updated successfully!",
+        data: updatedOrder,
+      });
+    } catch (error) {
+      return next(error);
+    }
+  },
+  cancleUserOrderController: async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const userId = req.userId;
+
+      const canceledOrder = await cancleOrderByUser(userId, id);
+
+      if (canceledOrder && canceledOrder.products) {
+        for (const item of canceledOrder.products) {
+          await editProductServices(item.product, {
+            $inc: { stock: item.quantity },
+          });
+        }
+      }
+      return res.status(200).json({
+        success: true,
+        message: `Order has been cancelled and items restocked successfully.`,
+        data: canceledOrder,
       });
     } catch (error) {
       return next(error);
